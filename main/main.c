@@ -155,6 +155,7 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
         case MQTT_EVENT_BEFORE_CONNECT:
             ESP_LOGI(TAG, "MQTT_EVENT_BEFORE_CONNECT");
             break;
+
         case MQTT_EVENT_CONNECTED:
             mqttConnected = true;
             ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
@@ -163,39 +164,64 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
             msg_id = esp_mqtt_client_subscribe(client, "homeassistant/CurrentTime", 0);
             ESP_LOGI(TAG, "Subscribe sent for time feed, msg_id=%d", msg_id);
             
+            /*
             // Send the sensor configurations
-            sprintf(topic, "homeassistant/binary_sensor/%s/config",config.Name);
-            sprintf(payload, "{\"unique_id\": \"T_%s\", \"device_class\": \"motion\", \
-                \"device\": {\"identifiers\": [\"%s\"], \"name\": \"%s\"}, \
-                \"availability\": {\"topic\": \"homeassistant/binary_sensor/%s/availability\", \"payload_available\": \"online\", \"payload_not_available\": \"offline\"}, \
-                \"min\":0, \"max\":15, \"retain\": false, \"state_topic\": \"homeassistant/binary_sensor/%s/state\"}"
-                ,config.UID, config.DeviceID, config.Name, config.Name, config.Name);
+            sprintf(topic, "homeassistant/binary_sensor/EntryMotion/config");
+            sprintf(payload, 
+                "{ \"name\": \"EntryMotion\", \
+                \"device_class\": \"motion\", \
+                \"state_topic\": \"homeassistant/binary_sensor/EntryMotion/state\", \
+                \"payload_on\": 1, \
+                \"payload_off\": 0, \
+                \"unique_id\": \"mysensor1\", \
+                \"device\": {\"identifiers\": [\"HouseAlarm-ID\"], \"name\": \"HouseAlarm\"}, \
+                \"retain\": true }");
             msg_id = esp_mqtt_client_publish(client, topic, payload, 0, 1, 1); // Temp sensor config, set the retain flag on the message
             mqttMessagesQueued++;
-            ESP_LOGI(TAG, "Published config message successfully, msg_id=%d", msg_id);
+            ESP_LOGI(TAG, "Published config message for HomuseAlarm EntryMotion sensor, msg_id=%d", msg_id);
+
+            sprintf(topic, "homeassistant/binary_sensor/RumpusMotion/config");
+            sprintf(payload, 
+                "{ \"name\": \"RumpusMotion\", \
+                \"device_class\": \"motion\", \
+                \"state_topic\": \"homeassistant/binary_sensor/RumpusMotion/state\", \
+                \"payload_on\": 1, \
+                \"payload_off\": 0, \
+                \"unique_id\": \"mysensor2\", \
+                \"device\": {\"identifiers\": [\"HouseAlarm-ID\"], \"name\": \"HouseAlarm\"}, \
+                \"retain\": true }");
+            msg_id = esp_mqtt_client_publish(client, topic, payload, 0, 1, 1); // Temp sensor config, set the retain flag on the message
+            mqttMessagesQueued++;
+            ESP_LOGI(TAG, "Published config message for HomuseAlarm EntryMotion sensor, msg_id=%d", msg_id);
+            */
 
             // Send an online message
-            sprintf(topic, "homeassistant/binary_sensor/%s/availability", config.Name);
+            sprintf(topic, "homeassistant/binary_sensor/HouseAlarm/availability");
             sprintf(payload, "online");
             msg_id = esp_mqtt_client_publish(client, topic, payload, 0, 1, 1); // Temp sensor config, set the retain flag on the message
             mqttMessagesQueued++;
-            ESP_LOGI(TAG, "Published online message successfully, msg_id=%d", msg_id);
+            ESP_LOGI(TAG, "Published online message, msg_id=%d", msg_id);
             break;
+
         case MQTT_EVENT_DISCONNECTED:
             mqttConnected = false;
             ESP_LOGE(TAG, "MQTT_EVENT_DISCONNECTED");
             break;
+
         case MQTT_EVENT_SUBSCRIBED:
             ESP_LOGI(TAG, "MQTT_EVENT_SUBSCRIBED, msg_id=%d", event->msg_id);
             mqttMessagesQueued--;
             break;
+
         case MQTT_EVENT_UNSUBSCRIBED:
             ESP_LOGI(TAG, "MQTT_EVENT_UNSUBSCRIBED, msg_id=%d", event->msg_id);
             break;
+
         case MQTT_EVENT_PUBLISHED:
             ESP_LOGI(TAG, "MQTT_EVENT_PUBLISHED, msg_id=%d", event->msg_id);
             mqttMessagesQueued--;
             break;
+
         case MQTT_EVENT_DATA:
             //ESP_LOGI(TAG, "MQTT_EVENT_DATA");
             strncpy(s, event->topic, event->topic_len);
@@ -212,16 +238,17 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
                 // Send an online every 10 seconds
                 if (seconds % 10 == 0) {
                     // Send an online message
-                    sprintf(topic, "homeassistant/binary_sensor/%s/availability", config.Name);
+                    sprintf(topic, "homeassistant/binary_sensor/HouseAlarm/availability");
                     sprintf(payload, "online");
-                    msg_id = esp_mqtt_client_publish(client, topic, payload, 0, 1, 1); // Temp sensor config, set the retain flag on the message
+                    msg_id = esp_mqtt_client_publish(client, topic, payload, 0, 1, 1); 
                     mqttMessagesQueued++;
-                    ESP_LOGI(TAG, "Published online message successfully, msg_id=%d", msg_id);
+                    ESP_LOGI(TAG, "Published online message for HouseAlarmm, id=%d", msg_id);
                 }
             } else {
                 ESP_LOGI(TAG, "Received unexpected message, topic %s", s);
             }
             break;
+
         case MQTT_EVENT_ERROR:
             ESP_LOGE(TAG, "MQTT_EVENT_ERROR. ");
             if (event->error_handle->error_type == MQTT_ERROR_TYPE_TCP_TRANSPORT) {
@@ -232,6 +259,7 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
                 ESP_LOGI(TAG, "WiFi connected = %d", wiFiConnected);
             }
             break;
+
         default:
             ESP_LOGE(TAG, "Other event id:%d", event->event_id);
             break;
@@ -241,8 +269,8 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
 static void mqtt_app_start(void)
 {
     char lwTopic[100];
-    sprintf(lwTopic, "homeassistant/binary_sensor/%s/availability", config.Name);
-    const char* lwMessage = "offline\0";
+    sprintf(lwTopic, "homeassistant/binary_sensor/HouseAlarm/availability");
+    const char* lwMessage = "offline";
     esp_mqtt_client_config_t mqtt_cfg = {
         .network = {
             .reconnect_timeout_ms = 250, // Reconnect MQTT broker after this many ms
@@ -281,6 +309,10 @@ void app_main(void)
     // GPIO setup
     gpio_set_direction(BUTTON_PIN, GPIO_MODE_INPUT);
     gpio_set_pull_mode(BUTTON_PIN, GPIO_PULLUP_ONLY);
+    gpio_set_direction(SW_IN_1, GPIO_MODE_INPUT);
+    gpio_set_pull_mode(SW_IN_1, GPIO_PULLUP_ONLY);
+    gpio_set_direction(SW_IN_2, GPIO_MODE_INPUT);
+    gpio_set_pull_mode(SW_IN_2, GPIO_PULLUP_ONLY);
 
     // Read the config mode button
     if (gpio_get_level(BUTTON_PIN) == 0) { configMode = true; }
@@ -345,7 +377,11 @@ void app_main(void)
     ESP_LOGI(TAG, "MQTT client started after %f seconds.", ((float)mqttWaits) * 0.25);
 
     // Loop forever, processing MQTT events.
-    while(true) {
+    int input1_currentState = false;
+    int input1_previousState = false;
+    int input2_currentState = false;
+    int input2_previousState = false;
+    while(true) {        
         if (!mqttConnected) { 
             ESP_LOGE(TAG, "Detected the MQTT client is offline in the main loop. Attempting to stop, destroy then restart it.");
             err = esp_mqtt_client_stop(client);
@@ -354,7 +390,31 @@ void app_main(void)
             if (err != ESP_OK) { ESP_LOGE(TAG, "MQTT client destroy error: %s", esp_err_to_name(err)); }
             mqtt_app_start();
         }        
-        vTaskDelay(250 / portTICK_PERIOD_MS); // Sleep for 1/4 second
+        vTaskDelay(25 / portTICK_PERIOD_MS); // Sleep 
+
+        // Check the inputs and send state messages
+        char topic[250];
+        char payload[80];
+        input1_currentState = gpio_get_level(SW_IN_1);
+        // Send a state message if the input changed
+        if (input1_currentState != input1_previousState) {
+            input1_previousState = input1_currentState;
+            sprintf(topic, "homeassistant/binary_sensor/HouseAlarm/EntryMotion/state");
+            if (input1_currentState) { sprintf(payload, "1"); } else { sprintf(payload, "0"); }
+            int msg_id = esp_mqtt_client_publish(client, topic, payload, 0, 1, 1); 
+            mqttMessagesQueued++;
+            ESP_LOGI(TAG, "Published state message for Entry motion sensor, msg_id=%d", msg_id);
+        }
+        input2_currentState = gpio_get_level(SW_IN_2);
+        // Send a state message if the input changed
+        if (input2_currentState != input2_previousState) {            
+            input2_previousState = input2_currentState;
+            sprintf(topic, "homeassistant/binary_sensor/HouseAlarm/RumpusMotion/state");
+            if (input2_currentState) { sprintf(payload, "1"); } else { sprintf(payload, "0"); }
+            int msg_id = esp_mqtt_client_publish(client, topic, payload, 0, 1, 1); 
+            mqttMessagesQueued++;
+            ESP_LOGI(TAG, "Published state message for Rumpus motion sensor, msg_id=%d", msg_id);
+        }
     }
 
 }

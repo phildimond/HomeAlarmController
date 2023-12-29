@@ -25,6 +25,9 @@
 
 #define BUTTON_PIN GPIO_NUM_13
 
+#define SW_IN_1 GPIO_NUM_26
+#define SW_IN_2 GPIO_NUM_27
+
 #define SLEEPTIME 30
 #define S_TO_uS(s) (s * 1000000)
 #define uS_TO_S(s) (s / 1000000)
@@ -36,4 +39,4 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
 static void mqtt_app_start(void);
 void app_main(void);
 
-#endif // __MAIN_H__
+#endif // __MAIN_H__y

@@ -1,7 +1,7 @@
 {
     "version":            "1",
     "project_name":       "HomeAlarmController",
-    "project_version":    "1",
+    "project_version":    "82785f7-dirty",
     "project_path":       "/home/phillip/source/repos/HomeAlarmController",
     "idf_path":           "/home/phillip/esp/esp-idf",
     "build_dir":          "/home/phillip/source/repos/HomeAlarmController/build",
